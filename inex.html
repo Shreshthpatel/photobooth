@@ -658,28 +658,28 @@ async function detectFace(imgEl){
 const AUTO_RECIPES={
   bow:(f)=>[
     // Bow sits at the top-right of forehead, tilted with face tilt
-    {emoji:'🎀', x:f.crown.x+f.faceW*0.25, y:f.crown.y-f.faceH*0.02, rot:f.tiltDeg-12, szF:0.55},
+    {emoji:'🎀', x:f.crown.x+f.faceW*0.25, y:f.crown.y-f.faceH*0.02, rot:f.tiltDeg-12, szF:0.35},
   ],
   hearts:(f)=>[
-    {emoji:'🩷', x:f.leftCheek.x,  y:f.leftCheek.y, rot:f.tiltDeg-8, szF:0.32},
-    {emoji:'🩷', x:f.rightCheek.x, y:f.rightCheek.y, rot:f.tiltDeg+8, szF:0.32},
+    {emoji:'🩷', x:f.leftCheek.x,  y:f.leftCheek.y, rot:f.tiltDeg-8, szF:0.20},
+    {emoji:'🩷', x:f.rightCheek.x, y:f.rightCheek.y, rot:f.tiltDeg+8, szF:0.20},
   ],
   blush:(f)=>'BLUSH', // special handled
   flowers:(f)=>[
-    {emoji:'🌸', x:f.hairLeft.x+f.faceW*0.05,  y:f.hairLeft.y,  rot:f.tiltDeg-18, szF:0.45},
-    {emoji:'🌷', x:f.hairRight.x-f.faceW*0.05, y:f.hairRight.y, rot:f.tiltDeg+14, szF:0.38},
-    {emoji:'✿',  x:f.hairTop.x-f.faceW*0.12,   y:f.hairTop.y,   rot:f.tiltDeg+5,  szF:0.28},
+    {emoji:'🌸', x:f.hairLeft.x+f.faceW*0.05,  y:f.hairLeft.y,  rot:f.tiltDeg-18, szF:0.28},
+    {emoji:'🌷', x:f.hairRight.x-f.faceW*0.05, y:f.hairRight.y, rot:f.tiltDeg+14, szF:0.24},
+    {emoji:'✿',  x:f.hairTop.x-f.faceW*0.12,   y:f.hairTop.y,   rot:f.tiltDeg+5,  szF:0.18},
   ],
   crown:(f)=>[
-    {emoji:'👑', x:f.crown.x, y:f.crown.y-f.faceH*0.06, rot:f.tiltDeg, szF:0.85},
+    {emoji:'👑', x:f.crown.x, y:f.crown.y-f.faceH*0.06, rot:f.tiltDeg, szF:0.55},
   ],
   glasses:(f)=>[
-    {emoji:'🕶', x:f.noseBridge.x, y:f.noseBridge.y, rot:f.tiltDeg, szF:1.05},
+    {emoji:'🕶', x:f.noseBridge.x, y:f.noseBridge.y, rot:f.tiltDeg, szF:0.70},
   ],
   stars:(f)=>[
-    {emoji:'⭐', x:f.hairLeft.x,   y:f.hairLeft.y-f.faceH*0.08,  rot:f.tiltDeg-22, szF:0.32},
-    {emoji:'✨', x:f.hairRight.x,  y:f.hairRight.y-f.faceH*0.08, rot:f.tiltDeg+18, szF:0.28},
-    {emoji:'⭐', x:f.crown.x-f.faceW*0.1, y:f.crown.y-f.faceH*0.1, rot:f.tiltDeg, szF:0.24},
+    {emoji:'⭐', x:f.hairLeft.x,   y:f.hairLeft.y-f.faceH*0.08,  rot:f.tiltDeg-22, szF:0.20},
+    {emoji:'✨', x:f.hairRight.x,  y:f.hairRight.y-f.faceH*0.08, rot:f.tiltDeg+18, szF:0.17},
+    {emoji:'⭐', x:f.crown.x-f.faceW*0.1, y:f.crown.y-f.faceH*0.1, rot:f.tiltDeg, szF:0.15},
   ],
 };
 
@@ -782,14 +782,33 @@ function drawBlushEllipse(ctx,bl,w,h,tilt){
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate(tilt*Math.PI/180);
+  // Draw soft red background patch
   const g=ctx.createRadialGradient(0,0,0,0,0,Math.max(rx,ry));
-  g.addColorStop(0,'rgba(230,120,130,0.38)');
-  g.addColorStop(0.5,'rgba(230,120,130,0.18)');
-  g.addColorStop(1,'rgba(230,120,130,0)');
+  g.addColorStop(0,'rgba(220,100,110,0.22)');
+  g.addColorStop(0.6,'rgba(220,100,110,0.12)');
+  g.addColorStop(1,'rgba(220,100,110,0)');
   ctx.scale(rx,ry);
   ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);
   ctx.fillStyle=g;
   ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(tilt*Math.PI/180);
+  // Draw three vertical lines
+  const lineHeight=ry*1.2;
+  const lineSpacing=rx*0.35;
+  const lineColor='rgba(230,100,120,0.5)';
+  ctx.strokeStyle=lineColor;
+  ctx.lineWidth=rx*0.15;
+  ctx.lineCap='round';
+  // Three vertical lines
+  for(let i=-1;i<=1;i++){
+    ctx.beginPath();
+    ctx.moveTo(i*lineSpacing,-lineHeight/2);
+    ctx.lineTo(i*lineSpacing,lineHeight/2);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -1033,9 +1052,32 @@ async function buildCanvas(){
       };
       const drawCanvasBlush=(bl,tilt)=>{
         ctx.save();ctx.translate(bl.cx,bl.cy);ctx.rotate(tilt*Math.PI/180);
+        // Draw soft red background patch
         const g=ctx.createRadialGradient(0,0,0,0,0,Math.max(bl.rx,bl.ry));
-        g.addColorStop(0,'rgba(220,100,110,0.35)');g.addColorStop(.5,'rgba(220,100,110,0.16)');g.addColorStop(1,'rgba(220,100,110,0)');
-        ctx.scale(bl.rx,bl.ry);ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.restore();
+        g.addColorStop(0,'rgba(220,100,110,0.22)');
+        g.addColorStop(0.6,'rgba(220,100,110,0.12)');
+        g.addColorStop(1,'rgba(220,100,110,0)');
+        ctx.scale(bl.rx,bl.ry);
+        ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);
+        ctx.fillStyle=g;
+        ctx.fill();
+        ctx.restore();
+        ctx.save();ctx.translate(bl.cx,bl.cy);ctx.rotate(tilt*Math.PI/180);
+        // Draw three vertical lines
+        const lineHeight=bl.ry*1.2;
+        const lineSpacing=bl.rx*0.35;
+        const lineColor='rgba(230,100,120,0.5)';
+        ctx.strokeStyle=lineColor;
+        ctx.lineWidth=bl.rx*0.15;
+        ctx.lineCap='round';
+        // Three vertical lines
+        for(let li=-1;li<=1;li++){
+          ctx.beginPath();
+          ctx.moveTo(li*lineSpacing,-lineHeight/2);
+          ctx.lineTo(li*lineSpacing,lineHeight/2);
+          ctx.stroke();
+        }
+        ctx.restore();
       };
       drawCanvasBlush(scaleBlushEllipse(face.blushLeft),face.tiltDeg);
       drawCanvasBlush(scaleBlushEllipse(face.blushRight),face.tiltDeg);
