@@ -1040,22 +1040,26 @@ async function buildCanvas(){
   for(let i=0;i<photos.length;i++){
     const img=await loadImg(photos[i]);
     const y=HEAD+i*(PH+GAP);
-    // Draw image with proper aspect ratio
+    // Draw image filling the frame (with crop to maintain aspect ratio)
     ctx.save();ctx.beginPath();rRect(ctx,PAD,y,PW,PH,2);ctx.clip();
-    // Calculate image scaling to cover the frame while maintaining aspect ratio
     const imgAspect=img.width/img.height;
     const frameAspect=PW/PH;
-    let drawW=PW, drawH=PH, drawX=0, drawY=0;
+    // Scale to fill frame while maintaining aspect ratio
+    let drawW, drawH, drawX, drawY;
     if(imgAspect>frameAspect){
-      // Image wider than frame
-      drawH=PW/imgAspect;
-      drawY=(PH-drawH)/2;
-    }else{
-      // Image taller than frame
+      // Image wider: scale to frame height, crop sides
+      drawH=PH;
       drawW=PH*imgAspect;
-      drawX=(PW-drawW)/2;
+      drawX=PAD-(drawW-PW)/2;
+      drawY=y;
+    }else{
+      // Image taller: scale to frame width, crop top/bottom
+      drawW=PW;
+      drawH=PW/imgAspect;
+      drawX=PAD;
+      drawY=y-(drawH-PH)/2;
     }
-    ctx.drawImage(img,PAD+drawX,y+drawY,drawW,drawH);
+    ctx.drawImage(img,drawX,drawY,drawW,drawH);
     ctx.restore();
     ctx.save();ctx.strokeStyle=dark?'rgba(250,247,242,.12)':'rgba(44,34,24,.1)';ctx.lineWidth=1;ctx.beginPath();rRect(ctx,PAD,y,PW,PH,2);ctx.stroke();ctx.restore();
 
