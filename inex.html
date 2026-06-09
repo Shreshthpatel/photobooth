@@ -1040,7 +1040,23 @@ async function buildCanvas(){
   for(let i=0;i<photos.length;i++){
     const img=await loadImg(photos[i]);
     const y=HEAD+i*(PH+GAP);
-    ctx.save();ctx.beginPath();rRect(ctx,PAD,y,PW,PH,2);ctx.clip();ctx.drawImage(img,PAD,y,PW,PH);ctx.restore();
+    // Draw image with proper aspect ratio
+    ctx.save();ctx.beginPath();rRect(ctx,PAD,y,PW,PH,2);ctx.clip();
+    // Calculate image scaling to cover the frame while maintaining aspect ratio
+    const imgAspect=img.width/img.height;
+    const frameAspect=PW/PH;
+    let drawW=PW, drawH=PH, drawX=0, drawY=0;
+    if(imgAspect>frameAspect){
+      // Image wider than frame
+      drawH=PW/imgAspect;
+      drawY=(PH-drawH)/2;
+    }else{
+      // Image taller than frame
+      drawW=PH*imgAspect;
+      drawX=(PW-drawW)/2;
+    }
+    ctx.drawImage(img,PAD+drawX,y+drawY,drawW,drawH);
+    ctx.restore();
     ctx.save();ctx.strokeStyle=dark?'rgba(250,247,242,.12)':'rgba(44,34,24,.1)';ctx.lineWidth=1;ctx.beginPath();rRect(ctx,PAD,y,PW,PH,2);ctx.stroke();ctx.restore();
 
     // Blush on canvas export
@@ -1086,14 +1102,17 @@ async function buildCanvas(){
     // Stickers
     placedStickers.filter(s=>s.slotIndex===i).forEach(s=>{
       const sx=PAD+(s.x/100)*PW, sy=y+(s.y/100)*PH;
-      // Scale size from slot pixels → canvas strip pixels
-      const slotW=document.getElementById(`st-slot-${i}`)?.offsetWidth||184;
-      const scale=PW/slotW;
+      // Scale size: use stored size or estimate from PW
+      const baseSlotW=184; // standard slot width in preview
+      const scale=PW/baseSlotW;
       const rSz=Math.round((s.size||26)*scale);
-      ctx.save();ctx.translate(sx,sy);ctx.rotate((s.rot||0)*Math.PI/180);
-      ctx.font=`${rSz}px serif`;ctx.textBaseline='middle';ctx.textAlign='center';
-      ctx.shadowColor='rgba(0,0,0,.15)';ctx.shadowBlur=3;
-      ctx.fillText(s.emoji,0,0);ctx.restore();
+      if(s.emoji){
+        ctx.save();ctx.translate(sx,sy);ctx.rotate((s.rot||0)*Math.PI/180);
+        ctx.font=`${rSz}px serif`;ctx.textBaseline='middle';ctx.textAlign='center';
+        ctx.fillStyle='rgba(0,0,0,0.8)';
+        ctx.shadowColor='rgba(0,0,0,.2)';ctx.shadowBlur=2;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+        ctx.fillText(s.emoji,0,0);ctx.restore();
+      }
     });
   }
 
